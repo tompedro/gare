@@ -76,43 +76,47 @@ struct ST{
 		return minRange(1, 0, n-1, a, z-1);
 	}
 	
-	//si può fare meglio
-	void add(int i, int l, int r, long long x){
-		for(int i = 0; i < n; i++){
-			if(i >= l && i < r){
-				sums[n + i].value += x; 
-				mins[n + i].value += x;
-			}
+	
+	void add(int i, int l, int r, int a, int z, long long x){
+		if(a > r || z < l) return;
+		if(r == l){
+			sums[i].value += x;
+			mins[i].value += x;
+			return;
 		}
-		for(int i = n - 1; i >= 1; i--){
-			sums[i].join(sums[2*i], sums[2*i+1]); 
-			mins[i].joinMin(mins[2*i], mins[2*i+1]); 
-		}
-		
-		if(i >= 2*n || a > r || z < l) return;
-		sums[i].value += x;
 		
 		int m = (l+r)/2;
 		
-		add(2*i, l, m, a, z),
-		add(2*i + 1, m+1, r, a, z)
-		//continua
+		add(2*i, l, m, a, z, x);
+		add(2*i + 1, m+1, r, a, z, x);
+		
+		sums[i].join(sums[2*i], sums[2*i+1]); 
+		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
 	}
 	
-	//si può fare meglio
-	void set(int l, int r, long long x){
-		for(int i = 0; i < n; i++){
-			if(i >= l && i < r){
-				sums[n + i].value = x; 
-				mins[n + i].value = x;
-			}
-		}
-		for(int i = n - 1; i >= 1; i--){
-			sums[i].join(sums[2*i], sums[2*i+1]); 
-			mins[i].joinMin(mins[2*i], mins[2*i+1]); 
-		}
+	void add(int a, int z, long long x){
+		add(1, 0, n-1, a, z-1, x);
 	}
 	
+	void set(int i, int l, int r, int a, int z, long long x){
+		if(a > r || z < l) return;
+		if(r == l){
+			sums[i].value = x;
+			mins[i].value = x;
+			return;
+		}
+		
+		int m = (l+r)/2;
+		
+		set(2*i, l, m, a, z, x);
+		set(2*i + 1, m+1, r, a, z, x);
+		
+		sums[i].join(sums[2*i], sums[2*i+1]); 
+		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
+	}
+	void set(int a, int z, long long x){
+		set(1, 0, n-1, a, z-1, x);
+	}
 };
 
 ST tree(vector<long long> (0,0));
