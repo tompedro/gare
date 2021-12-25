@@ -4,9 +4,9 @@ typedef long long ll;
 
 struct ST{
 	struct Node{
-		int value;
+		ll value;
 		
-		Node(int v = 0){
+		Node(ll v = 0){
 			value = v;
 		}
 		
@@ -20,9 +20,11 @@ struct ST{
 	};
 	vector<Node> sums;
 	vector<Node> mins;
-	int n;
+	vector<ll> lazy;
+	ll n;
 	
 	ST(vector<long long> v){
+		ll initialSize = v.size();
 		n = v.size();
 		
 		while(__builtin_popcount(n) != 1){
@@ -31,23 +33,41 @@ struct ST{
 		}
 		sums.resize(2*n);
 		mins.resize(2*n);
+		lazy.assign(2*n,0);
 		
-		for(int i = 0; i < n; i++){
+		for(ll i = 0; i < n; i++){
 			sums[n + i].value = v[i]; 
-			mins[n + i].value = v[i];
+			if(i >= initialSize){
+				mins[n + i].value = LLONG_MAX;
+			}else{
+				mins[n + i].value = v[i];
+			}
+			
 		}
-		for(int i = n - 1; i >= 1; i--){
+		for(ll i = n - 1; i >= 1; i--){
 			sums[i].join(sums[2*i], sums[2*i+1]); 
 			mins[i].joinMin(mins[2*i], mins[2*i+1]); 
 		}
 	}
 	
-	ll sumRange(int i, int l, int r, int a, int z){
-		if(a <= l && z >= r) return sums[i].value;
-		
+	ll sumRange(ll i, ll l, ll r, ll a, ll z){
 		if(a > r || z < l) return 0;
 		
-		int m = (l+r)/2;
+		if(lazy[i] != 0){
+			sums[i].value += (r-l+1)*lazy[i];
+			mins[i].value += lazy[i];
+			
+			if(l != r){
+				lazy[2*i] += lazy[i];
+				lazy[2*i+1] += lazy[i];
+			}
+			
+			lazy[i] = 0;
+		}
+		
+		if(a <= l && z >= r) return sums[i].value;
+		
+		ll m = (l+r)/2;
 		
 		return (
 			sumRange(2*i, l, m, a, z) + 
@@ -55,16 +75,30 @@ struct ST{
 		);
 	}
 	
-	ll sumRange(int a, int z){
+	ll sumRange(ll a, ll z){
+		/*for(ll i = 0; i < 2*n; i++) cout << sums[i].value << " ";
+		cout << endl;*/
 		return sumRange(1, 0, n-1, a, z-1);
 	}
 	
-	ll minRange(int i, int l, int r, int a, int z){
-		if(a <= l && z >= r) return mins[i].value;
-		
+	ll minRange(ll i, ll l, ll r, ll a, ll z){
 		if(a > r || z < l) return LLONG_MAX;
 		
-		int m = (l+r)/2;
+		if(lazy[i] != 0){
+			sums[i].value += (r-l+1)*lazy[i];
+			mins[i].value += lazy[i];
+			
+			if(l != r){
+				lazy[2*i] += lazy[i];
+				lazy[2*i+1] += lazy[i];
+			}
+			
+			lazy[i] = 0;
+		}
+		
+		if(a <= l && z >= r) return mins[i].value;
+		
+		ll m = (l+r)/2;
 		
 		return min(
 			minRange(2*i, l, m, a, z),
@@ -72,20 +106,44 @@ struct ST{
 		);
 	}
 	
-	ll minRange(int a, int z){
+	ll minRange(ll a, ll z){
+		//ll res = minRange(1, 0, n-1, a, z-1);
+		/*for(ll i = 0; i < 2*n; i++) cout << lazy[i] << " ";
+		cout << endl;
+		for(ll i = 0; i < 2*n; i++) cout << mins[i].value << " ";
+		cout << endl;*/
 		return minRange(1, 0, n-1, a, z-1);
 	}
 	
 	
-	void add(int i, int l, int r, int a, int z, long long x){
-		if(a > r || z < l) return;
-		if(r == l){
-			sums[i].value += x;
+	void add(ll i, ll l, ll r, ll a, ll z, long long x){
+		if(lazy[i] != 0){
+			sums[i].value += (r-l+1)*lazy[i];
+			mins[i].value += lazy[i];
+			
+			if(l != r){
+				lazy[2*i] += lazy[i];
+				lazy[2*i+1] += lazy[i];
+			}
+			
+			lazy[i] = 0;
+		}
+		
+		if(l > r || a > r || z < l) return;
+		
+		if(l >= a && r <= z){
+			sums[i].value += (r-l+1)*x;
 			mins[i].value += x;
+			
+			if(l != r){
+				lazy[2*i] += x;
+				lazy[2*i+1] += x;
+			}
+			
 			return;
 		}
 		
-		int m = (l+r)/2;
+		ll m = (l+r)/2;
 		
 		add(2*i, l, m, a, z, x);
 		add(2*i + 1, m+1, r, a, z, x);
@@ -94,11 +152,26 @@ struct ST{
 		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
 	}
 	
-	void add(int a, int z, long long x){
+	void add(ll a, ll z, long long x){
 		add(1, 0, n-1, a, z-1, x);
+		/*for(ll i = 0; i < 2*n; i++) cout << lazy[i] << " ";
+		for(ll i = 0; i < 2*n; i++) cout << sums[i].value << " ";
+		cout << endl;*/
 	}
 	
-	void set(int i, int l, int r, int a, int z, long long x){
+	void set(ll i, ll l, ll r, ll a, ll z, long long x){
+		if(lazy[i] != 0){
+			sums[i].value += (r-l+1)*lazy[i];
+			mins[i].value += lazy[i];
+			
+			if(l != r){
+				lazy[2*i] += lazy[i];
+				lazy[2*i+1] += lazy[i];
+			}
+			
+			lazy[i] = 0;
+		}
+		
 		if(a > r || z < l) return;
 		if(r == l){
 			sums[i].value = x;
@@ -106,7 +179,7 @@ struct ST{
 			return;
 		}
 		
-		int m = (l+r)/2;
+		ll m = (l+r)/2;
 		
 		set(2*i, l, m, a, z, x);
 		set(2*i + 1, m+1, r, a, z, x);
@@ -114,48 +187,81 @@ struct ST{
 		sums[i].join(sums[2*i], sums[2*i+1]); 
 		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
 	}
-	void set(int a, int z, long long x){
+	void set(ll a, ll z, long long x){
 		set(1, 0, n-1, a, z-1, x);
+	}
+	long long lower_bound(ll i, ll l, ll r, ll a, ll z, ll x){
+		if(i > mins.size()) return LLONG_MAX;
+		if(a >= r || z <= l) return LLONG_MAX;
+		if(mins[i].value > x)	return LLONG_MAX;
+		
+		if(lazy[i] != 0){
+			sums[i].value += (r-l+1)*lazy[i];
+			mins[i].value += lazy[i];
+			
+			if(l != r){
+				lazy[2*i] += lazy[i];
+				lazy[2*i+1] += lazy[i];
+			}
+			
+			lazy[i] = 0;
+		}
+		
+		if(r-l == 1){
+			return i - (mins.size()-n);
+		}
+		
+		return min(
+			lower_bound(2*i, l, (l+r)/2, a, z, x),
+			lower_bound(2*i+1, (l+r)/2, r, a, z, x)
+		);
+	}
+	
+	long long lower_bound(ll a, ll z, ll x) {
+		return lower_bound(1, 0, n-1, a, z-1, x);
 	}
 };
 
 ST tree(vector<long long> (0,0));
 
-long long get_sum(int l, int r){
+long long get_sum(ll l, ll r){
 	return tree.sumRange(l,r);
 }
-void add(int l, int r, long long x){
+void add(ll l, ll r, long long x){
 	tree.add(l,r,x);
 }
 void init(vector<long long> a){
 	ST t(a);
 	tree = t;
 }
-void set_range(int l, int r, long long x){
+void set_range(ll l, ll r, long long x){
 	tree.set(l,r,x);
 }
-long long get_min(int l, int r){
+long long get_min(ll l, ll r){
 	return tree.minRange(l,r);
 }
-int lower_bound(int l, int r, long long x){
-	return 99999;
+ll lower_bound(ll l, ll r, long long x){
+	ll a = tree.lower_bound(l,r,x);
+	if(a == LLONG_MAX) return -1;
+	return a;
 }
 
 int main() {
+	freopen("input.txt", "r", stdin);
 	ios::sync_with_stdio(false);
 	cin.tie(0);
 	cout.tie(0);
 	
-	int n, q;
+	ll n, q;
 	cin >> n >> q;
 	
 	vector<long long> a(n);
-	for (int i = 0; i < n; i++)
+	for (ll i = 0; i < n; i++)
 		cin >> a[i];
 	init(a);
 	
-	for (int i = 0; i < q; i++) {
-		int op, l, r;
+	for (ll i = 0; i < q; i++) {
+		ll op, l, r;
 		long long x;
 		cin >> op;
 		cin >> l >> r;
@@ -170,4 +276,8 @@ int main() {
 	
 	return 0;
 }
-
+/*
+5 1
+1 2 3 4 5
+2 0 3 7
+*/
