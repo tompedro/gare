@@ -1,0 +1,35 @@
+processo 1 1
+piena
+processo 2 1
+piena
+processo 3 1
+piena
+processo 4 1
+piena
+processo 5 1
+piena
+processo 5 2
+piena
+processo 5 3
+piena
+processo 5 4
+piena
+processo 5 5
+piena
+processo 1 2
+piena
+processo 1 3
+piena
+processo 1 4
+piena
+processo 1 5
+piena
+processo 2 5
+piena
+processo 3 5
+piena
+processo 4 5
+piena
+processo 3 3
+piena
+2

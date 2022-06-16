@@ -1,8 +1,6 @@
-#include <bits/stdc++.h>
-using namespace std;
-typedef long long ll;
-
-#include <bits/stdc++.h>
+#include <vector>
+#include <algorithm>
+#include <iostream>
 using namespace std;
 typedef long long ll;
 

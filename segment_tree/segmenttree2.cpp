@@ -1,26 +1,55 @@
-#include <bits/stdc++.h>
+#include <vector>
+#include <algorithm>
+#include <iostream>
+#include <queue>
 using namespace std;
 typedef long long ll;
 
 struct ST{
 	struct Node{
 		ll value;
+		ll valueMin;
+		queue<pair<int,int> > lazy;
 		
 		Node(ll v = 0){
 			value = v;
+			valueMin = v;
 		}
 		
 		void join(Node l, Node r){
 			value = l.value + r.value;
+			valueMin = min(l.valueMin, r.valueMin);
 		}
-		
-		void joinMin(Node l, Node r){
-			value = min(l.value, r.value);
+
+		void addLazy(queue<pair<int,int> > p){
+			while(!p.empty()){
+				pair<int,int> a = p.front();
+				p.pop();
+				lazy.push(a);
+			}
 		}
+
+		queue<pair<int,int> > apply(int l, int r){
+			queue<pair<int,int> > q;
+			q = lazy;
+			while(!lazy.empty()){
+				pair<int,int> a;
+				a = lazy.front();
+				lazy.pop();
+				if(a.first == 0){
+					value += a.second*(r-l+1);
+					valueMin += a.second;
+				}else{
+					value = a.second*(r-l+1);
+					valueMin = a.second;
+				}
+			}
+			return q;
+		}
+
+		bool isLazy() {return !lazy.empty();}
 	};
-	vector<Node> sums;
-	vector<Node> mins;
-	vector<ll> lazy;
+	vector<Node> tree;
 	ll n;
 	
 	ST(vector<long long> v){
@@ -31,41 +60,35 @@ struct ST{
 			v.push_back(0);
 			n++;
 		}
-		sums.resize(2*n);
-		mins.resize(2*n);
-		lazy.assign(2*n,0);
+		tree.resize(2*n);
 		
 		for(ll i = 0; i < n; i++){
-			sums[n + i].value = v[i]; 
+			tree[n + i].value = v[i]; 
 			if(i >= initialSize){
-				mins[n + i].value = LLONG_MAX;
+				tree[n + i].valueMin = LLONG_MAX;
 			}else{
-				mins[n + i].value = v[i];
+				tree[n + i].valueMin = v[i];
 			}
 			
 		}
 		for(ll i = n - 1; i >= 1; i--){
-			sums[i].join(sums[2*i], sums[2*i+1]); 
-			mins[i].joinMin(mins[2*i], mins[2*i+1]); 
+			tree[i].join(tree[2*i], tree[2*i+1]);
 		}
 	}
 	
 	ll sumRange(ll i, ll l, ll r, ll a, ll z){
 		if(a > r || z < l) return 0;
 		
-		if(lazy[i] != 0){
-			sums[i].value += (r-l+1)*lazy[i];
-			mins[i].value += lazy[i];
+		if(tree[i].isLazy()){
+			queue<pair<int,int> > u = tree[i].apply(l,r);
 			
 			if(l != r){
-				lazy[2*i] += lazy[i];
-				lazy[2*i+1] += lazy[i];
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
-			
-			lazy[i] = 0;
 		}
 		
-		if(a <= l && z >= r) return sums[i].value;
+		if(a <= l && z >= r) return tree[i].value;
 		
 		ll m = (l+r)/2;
 		
@@ -76,7 +99,7 @@ struct ST{
 	}
 	
 	ll sumRange(ll a, ll z){
-		/*for(ll i = 0; i < 2*n; i++) cout << sums[i].value << " ";
+		/*for(ll i = 0; i < 2*n; i++) cout << tree[i].value << " ";
 		cout << endl;*/
 		return sumRange(1, 0, n-1, a, z-1);
 	}
@@ -84,19 +107,16 @@ struct ST{
 	ll minRange(ll i, ll l, ll r, ll a, ll z){
 		if(a > r || z < l) return LLONG_MAX;
 		
-		if(lazy[i] != 0){
-			sums[i].value += (r-l+1)*lazy[i];
-			mins[i].value += lazy[i];
+		if(tree[i].isLazy()){
+			queue<pair<int,int> > u = tree[i].apply(l,r);
 			
 			if(l != r){
-				lazy[2*i] += lazy[i];
-				lazy[2*i+1] += lazy[i];
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
-			
-			lazy[i] = 0;
 		}
 		
-		if(a <= l && z >= r) return mins[i].value;
+		if(a <= l && z >= r) return tree[i].valueMin;
 		
 		ll m = (l+r)/2;
 		
@@ -107,37 +127,33 @@ struct ST{
 	}
 	
 	ll minRange(ll a, ll z){
-		//ll res = minRange(1, 0, n-1, a, z-1);
-		/*for(ll i = 0; i < 2*n; i++) cout << lazy[i] << " ";
-		cout << endl;
-		for(ll i = 0; i < 2*n; i++) cout << mins[i].value << " ";
+		/*for(ll i = 0; i < 2*n; i++) cout << tree[i].value << " ";
 		cout << endl;*/
 		return minRange(1, 0, n-1, a, z-1);
 	}
 	
 	
 	void add(ll i, ll l, ll r, ll a, ll z, long long x){
-		if(lazy[i] != 0){
-			sums[i].value += (r-l+1)*lazy[i];
-			mins[i].value += lazy[i];
+		if(tree[i].isLazy()){
+			queue<pair<int,int> > u = tree[i].apply(l,r);
 			
 			if(l != r){
-				lazy[2*i] += lazy[i];
-				lazy[2*i+1] += lazy[i];
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
-			
-			lazy[i] = 0;
 		}
 		
 		if(l > r || a > r || z < l) return;
 		
 		if(l >= a && r <= z){
-			sums[i].value += (r-l+1)*x;
-			mins[i].value += x;
+			tree[i].value += (r-l+1)*x;
+			tree[i].valueMin += x;
 			
 			if(l != r){
-				lazy[2*i] += x;
-				lazy[2*i+1] += x;
+				queue<pair<int,int> > u;
+				u.push(make_pair(0,x));
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
 			
 			return;
@@ -148,34 +164,38 @@ struct ST{
 		add(2*i, l, m, a, z, x);
 		add(2*i + 1, m+1, r, a, z, x);
 		
-		sums[i].join(sums[2*i], sums[2*i+1]); 
-		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
+		tree[i].join(tree[2*i], tree[2*i+1]);
 	}
 	
 	void add(ll a, ll z, long long x){
-		add(1, 0, n-1, a, z-1, x);
-		/*for(ll i = 0; i < 2*n; i++) cout << lazy[i] << " ";
-		for(ll i = 0; i < 2*n; i++) cout << sums[i].value << " ";
+		/*for(ll i = 0; i < 2*n; i++) cout << tree[i].value << " ";
 		cout << endl;*/
+		add(1, 0, n-1, a, z-1, x);
 	}
 	
 	void set(ll i, ll l, ll r, ll a, ll z, long long x){
-		if(lazy[i] != 0){
-			sums[i].value += (r-l+1)*lazy[i];
-			mins[i].value += lazy[i];
+		if(tree[i].isLazy()){
+			queue<pair<int,int> > u = tree[i].apply(l,r);
 			
 			if(l != r){
-				lazy[2*i] += lazy[i];
-				lazy[2*i+1] += lazy[i];
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
-			
-			lazy[i] = 0;
 		}
 		
-		if(a > r || z < l) return;
-		if(r == l){
-			sums[i].value = x;
-			mins[i].value = x;
+		if(l > r || a > r || z < l) return;
+		
+		if(l >= a && r <= z){
+			tree[i].value = x*(r-l+1);
+			tree[i].valueMin = x;
+			
+			if(l != r){
+				queue<pair<int,int> > u;
+				u.push(make_pair(1,x));
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
+			}
+			
 			return;
 		}
 		
@@ -184,31 +204,29 @@ struct ST{
 		set(2*i, l, m, a, z, x);
 		set(2*i + 1, m+1, r, a, z, x);
 		
-		sums[i].join(sums[2*i], sums[2*i+1]); 
-		mins[i].joinMin(mins[2*i], mins[2*i+1]); 
+		tree[i].join(tree[2*i], tree[2*i+1]);
 	}
 	void set(ll a, ll z, long long x){
+		/*for(ll i = 0; i < 2*n; i++) cout << tree[i].value << " ";
+		cout << endl;*/
 		set(1, 0, n-1, a, z-1, x);
 	}
 	long long lower_bound(ll i, ll l, ll r, ll a, ll z, ll x){
-		if(i > mins.size()) return LLONG_MAX;
+		if(i > tree.size()) return LLONG_MAX;
 		if(a >= r || z <= l) return LLONG_MAX;
-		if(mins[i].value > x)	return LLONG_MAX;
+		if(tree[i].valueMin > x)	return LLONG_MAX;
 		
-		if(lazy[i] != 0){
-			sums[i].value += (r-l+1)*lazy[i];
-			mins[i].value += lazy[i];
+		if(tree[i].isLazy()){
+			queue<pair<int,int> > u = tree[i].apply(l,r);
 			
 			if(l != r){
-				lazy[2*i] += lazy[i];
-				lazy[2*i+1] += lazy[i];
+				tree[2*i].addLazy(u);
+				tree[2*i+1].addLazy(u);
 			}
-			
-			lazy[i] = 0;
 		}
 		
 		if(r-l == 1){
-			return i - (mins.size()-n);
+			return i - (tree.size()-n);
 		}
 		
 		return min(
@@ -218,6 +236,8 @@ struct ST{
 	}
 	
 	long long lower_bound(ll a, ll z, ll x) {
+		/*for(ll i = 0; i < 2*n; i++) cout << tree[i].value << " ";
+		cout << endl;*/
 		return lower_bound(1, 0, n-1, a, z-1, x);
 	}
 };

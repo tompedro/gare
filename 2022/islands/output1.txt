@@ -1,0 +1,15 @@
+processo 1 1
+piena
+processo 2 1
+piena
+processo 3 1
+piena
+processo 2 2
+piena
+processo 1 4
+piena
+processo 2 4
+piena
+processo 4 3
+piena
+3

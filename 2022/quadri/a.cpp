@@ -6,23 +6,23 @@ using namespace std;
 static FILE *fr, *fw;
 
 // Declaring variables
-static int N;
+static long long int N;
 static long long M;
-static int* V;
-static int B;
+static long long int* V;
+static long long int B;
 
-int o = 0;
-int res = 0;
+long long int o = 0;
+long long int res = 0;
 
-int maxSub(int arr[], int N, int k){
-	int MAX = 0;
+long long int maxSub(long long int arr[], long long int N, long long int k){
+	long long int MAX = 0;
 	
-	for(int i = 0; i < k; i++){
+	for(long long int i = 0; i < k; i++){
 		MAX += arr[i];
 	}
 	
-	int last = MAX;
-	for(int i = 1; i <= N-k; i++){
+	long long int last = MAX;
+	for(long long int i = 1; i <= N-k; i++){
 		last = last - arr[i-1] + arr[i+k-1];
 		if(last > MAX) MAX = last;
 	}
@@ -30,29 +30,29 @@ int maxSub(int arr[], int N, int k){
 	return MAX;
 }
 
-int binarySearch(int arr[], int l, int r, int x, int N){
+long long int binarySearch(long long int arr[], long long int l, long long int r, long long int x, long long int N){
     if (r >= l) {
-        int mid = l + (r - l) / 2;
-		int a = maxSub(arr, N, mid);
+        long long int mid = l + (r - l) / 2;
+		long long  int a = maxSub(arr, N, mid);
 		
-        if (a == x)
+        if (a == x){
+			res = mid;
             return mid;
+		}
+			
         if (a > x){
             return binarySearch(arr, l, mid - 1, x, N);
  		}
- 		o = a;
- 		res = mid;
+		
+		res = mid;
         return binarySearch(arr, mid + 1, r, x, N);
     }
-    
-    return o;
-}
-
-int quadri(int N, long long M, int* V){
-	binarySearch(V, 0, N, M, N);
 	return res;
 }
 
+long long int quadri(long long int N, long long M, long long int* V){
+	return binarySearch(V, 0, N, M, N);
+}
 
 
 int main() {
@@ -60,11 +60,11 @@ int main() {
     fw = fopen("output.txt", "w");
 
 	// Iterators used in for loops
-	int i0;
+	long long int i0;
 
 	// Reading input
 	fscanf(fr, "%d %lld", &N, &M);
-	V = (int*)malloc(N * sizeof(int));
+	V = (long long int*)malloc(N * sizeof(long long int));
 	for (i0 = 0; i0 < N; i0++) {
 	    fscanf(fr, "%d", &V[i0]);
 	}
